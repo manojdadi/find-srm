@@ -1,0 +1,13 @@
+# compiled Java
+*.class
+out/
+
+# local data: accounts, reports and photos (never commit these)
+data/
+srmfind.dat
+
+# tooling
+.claude/
+.vercel/
+.env*
+.DS_Store

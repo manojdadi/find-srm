@@ -1,0 +1,1041 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SRM Find Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bitter:wght@700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Colours taken from the SRM Find Portal presentation */
+  :root {
+    --sky: #dcebf8;        /* title slide background */
+    --panel: #e5f0fa;      /* info boxes */
+    --bg: #f3f8fd;
+    --card: #ffffff;
+    --navy: #1d3550;       /* headings, code blocks */
+    --navy-2: #2a4767;
+    --blue: #2b76b9;       /* "FIND", pills, buttons */
+    --blue-dark: #22629c;
+    --teal: #1a9bb0;
+    --indigo: #5a5fd6;
+    --amber: #f5a92f;      /* "Resolved" highlight */
+    --amber-ink: #6b4200;
+    --text: #1d3550;
+    --muted: #5d7089;
+    --line: #d4e3f2;
+    --lost: #c8424a; --lost-bg: #fbe9ea;
+    --found: #12808f; --found-bg: #dff3f5;
+    --done: #4b4fb8; --done-bg: #e9e9fb;
+    --radius: 16px;
+    --shadow: 0 1px 2px rgba(29,53,80,.06), 0 8px 24px rgba(29,53,80,.07);
+    --shadow-lg: 0 24px 60px rgba(29,53,80,.22);
+    --display: "Bitter", Georgia, serif;
+    --sans: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; font-family: var(--sans); font-size: 16px; line-height: 1.5;
+         background: var(--bg); color: var(--text); }
+  .hidden { display: none !important; }
+  img { max-width: 100%; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  a { color: var(--blue); }
+  h1, h2, h3 { line-height: 1.15; margin: 0; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
+  .eyebrow { font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--blue); }
+  .muted { color: var(--muted); }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  svg.i { width: 1em; height: 1em; stroke: currentColor; fill: none; stroke-width: 1.8;
+          stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+  /* ---------- form controls ---------- */
+  label.f { display: block; font-size: 14px; font-weight: 600; margin: 16px 0 6px; }
+  .input, select.input, textarea.input {
+    width: 100%; padding: 11px 14px; border: 1.5px solid var(--line); border-radius: 12px;
+    background: #fff; transition: border-color .15s, box-shadow .15s; }
+  textarea.input { min-height: 104px; resize: vertical; }
+  .input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 4px rgba(43,118,185,.15); }
+  .input.with-icon { padding-left: 42px; }
+  .field-icon { position: relative; }
+  .field-icon > svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 18px; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 0;
+         border-radius: 999px; padding: 11px 20px; font-weight: 700; cursor: pointer; text-decoration: none;
+         background: var(--blue); color: #fff; transition: background .15s, transform .1s, box-shadow .15s;
+         white-space: nowrap; }
+  .btn:hover { background: var(--blue-dark); }
+  .btn:active { transform: translateY(1px); }
+  .btn:focus-visible, .chip:focus-visible, .card:focus-visible, nav a:focus-visible { outline: 3px solid rgba(43,118,185,.45); outline-offset: 2px; }
+  .btn.navy { background: var(--navy); } .btn.navy:hover { background: var(--navy-2); }
+  .btn.light { background: #fff; color: var(--navy); box-shadow: inset 0 0 0 1.5px var(--line); }
+  .btn.light:hover { background: var(--panel); }
+  .btn.amber { background: var(--amber); color: var(--navy); } .btn.amber:hover { background: #e99c1d; }
+  .btn.danger { background: #fff; color: var(--lost); box-shadow: inset 0 0 0 1.5px #f1cfd2; }
+  .btn.danger:hover { background: var(--lost-bg); }
+  .btn.sm { padding: 7px 14px; font-size: 14px; }
+  .btn.block { width: 100%; }
+  .btn[disabled] { opacity: .55; cursor: default; }
+
+  .badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700;
+           letter-spacing: .04em; padding: 3px 10px; border-radius: 999px; }
+  .badge.LOST { background: var(--lost-bg); color: var(--lost); }
+  .badge.FOUND { background: var(--found-bg); color: var(--found); }
+  .badge.RESOLVED { background: var(--done-bg); color: var(--done); }
+  .badge.soft { background: var(--panel); color: var(--blue); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+  /* ================= LANDING / AUTH ================= */
+  #auth { min-height: 100vh; background:
+          radial-gradient(1200px 600px at 85% -10%, rgba(43,118,185,.18), transparent 60%),
+          radial-gradient(900px 500px at -10% 110%, rgba(26,155,176,.14), transparent 60%),
+          var(--sky); }
+  .landing { display: grid; grid-template-columns: 1.15fr .85fr; gap: 56px; align-items: center;
+             min-height: 100vh; padding-top: 48px; padding-bottom: 48px; }
+  .landing .uni { color: var(--muted); font-weight: 600; font-size: 17px; }
+  .display { font-family: var(--display); font-weight: 800; color: var(--navy);
+             font-size: clamp(44px, 7vw, 88px); letter-spacing: -.01em; margin: 26px 0 14px; line-height: 1; }
+  .display span { color: var(--blue); }
+  .landing .lead { font-size: 22px; color: var(--navy); margin: 0 0 6px; font-weight: 500; }
+  .landing .lead-sub { color: var(--muted); max-width: 520px; margin: 0 0 26px; font-size: 17px; }
+  .pills { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 34px; }
+  .pills span { background: var(--blue); color: #fff; font-weight: 700; padding: 9px 20px; border-radius: 999px; font-size: 15px; }
+  .credits { display: flex; flex-wrap: wrap; gap: 22px 48px; }
+  .credits small { display: block; font-size: 12px; font-weight: 700; letter-spacing: .08em; color: var(--blue); margin-bottom: 4px; }
+  .credits b { font-size: 17px; }
+  .auth-card { background: rgba(255,255,255,.92); backdrop-filter: blur(10px); border-radius: 24px;
+               padding: 32px; box-shadow: var(--shadow-lg); border: 1px solid rgba(255,255,255,.8); }
+  .auth-card h2 { font-family: var(--display); font-size: 28px; }
+  .auth-card .sub { color: var(--muted); margin: 6px 0 20px; }
+  .seg { display: flex; background: var(--panel); border-radius: 999px; padding: 4px; gap: 4px; }
+  .seg button { flex: 1; border: 0; background: transparent; padding: 9px 12px; border-radius: 999px;
+                font-weight: 700; color: var(--muted); cursor: pointer; display: inline-flex;
+                align-items: center; justify-content: center; gap: 8px; transition: background .15s, color .15s; }
+  .seg button.on { background: #fff; color: var(--navy); box-shadow: 0 1px 4px rgba(29,53,80,.12); }
+  .seg.big button.on.lost { background: var(--navy); color: #fff; }
+  .seg.big button.on.found { background: var(--blue); color: #fff; }
+  .hint { font-size: 13px; margin-top: 6px; min-height: 18px; color: var(--muted); }
+  .hint.ok { color: var(--found); } .hint.bad { color: var(--lost); }
+  .msg { padding: 11px 14px; border-radius: 12px; margin-top: 14px; font-size: 14px; font-weight: 600; }
+  .msg.err { background: var(--lost-bg); color: #8f2229; }
+  .msg.ok { background: var(--found-bg); color: #0b5d68; }
+
+  /* ================= APP SHELL ================= */
+  .topbar { position: sticky; top: 0; z-index: 30; background: rgba(255,255,255,.85);
+            backdrop-filter: saturate(1.4) blur(12px); border-bottom: 1px solid var(--line); }
+  .topbar .wrap { display: flex; align-items: center; gap: 22px; height: 68px; }
+  .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--navy); }
+  .brand .mark { width: 36px; height: 36px; border-radius: 10px; background: var(--navy); color: #fff;
+                 display: grid; place-items: center; font-family: var(--display); font-weight: 800; font-size: 15px; }
+  .brand b { font-family: var(--display); font-weight: 800; font-size: 20px; letter-spacing: .01em; }
+  .brand b span { color: var(--blue); }
+  nav.main { display: flex; gap: 4px; }
+  nav.main a { text-decoration: none; color: var(--muted); font-weight: 700; padding: 8px 14px; border-radius: 999px;
+               display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; font-size: 15px; }
+  nav.main a:hover { color: var(--navy); background: var(--panel); }
+  nav.main a.on { color: var(--blue); background: var(--panel); }
+  .top-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .icon-btn { position: relative; width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--panel);
+              color: var(--navy); display: grid; place-items: center; cursor: pointer; font-size: 19px; }
+  .icon-btn:hover { background: var(--line); }
+  .icon-btn .count { position: absolute; top: -3px; right: -3px; min-width: 19px; height: 19px; padding: 0 5px;
+                     border-radius: 999px; background: var(--amber); color: var(--navy); font-size: 11px; font-weight: 800;
+                     display: grid; place-items: center; border: 2px solid #fff; }
+  .avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--blue), var(--teal));
+            color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 15px; flex: none; }
+  .avatar.sm { width: 26px; height: 26px; font-size: 11px; }
+  .user-menu { position: relative; }
+  .user-menu > button { border: 0; background: none; padding: 0; cursor: pointer; border-radius: 50%; }
+  .menu { position: absolute; right: 0; top: 50px; background: #fff; border-radius: 14px; box-shadow: var(--shadow-lg);
+          padding: 8px; min-width: 240px; border: 1px solid var(--line); }
+  .menu .who { padding: 10px 12px 12px; border-bottom: 1px solid var(--line); margin-bottom: 6px; }
+  .menu .who b { display: block; } .menu .who small { color: var(--muted); word-break: break-all; }
+  .menu button { width: 100%; text-align: left; border: 0; background: none; padding: 10px 12px; border-radius: 10px;
+                 cursor: pointer; font-weight: 600; display: flex; gap: 10px; align-items: center; }
+  .menu button:hover { background: var(--panel); }
+
+  main { padding-bottom: 60px; }
+  section.view { animation: fade .25s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  /* hero */
+  .hero { background:
+          radial-gradient(800px 400px at 95% 0%, rgba(43,118,185,.20), transparent 60%),
+          var(--sky); border-bottom: 1px solid var(--line); }
+  .hero .wrap { display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px; padding-top: 48px; padding-bottom: 48px; align-items: center; }
+  .hero h1 { font-family: var(--display); font-weight: 800; font-size: clamp(36px, 5vw, 58px); color: var(--navy); margin: 10px 0 14px; }
+  .hero h1 em { font-style: normal; color: var(--blue); }
+  .hero p { color: var(--navy-2); font-size: 18px; max-width: 520px; margin: 0 0 24px; }
+  .hero .ctas { display: flex; gap: 12px; flex-wrap: wrap; }
+  .hero .ctas .btn { padding: 14px 24px; font-size: 16px; }
+  .steps { display: grid; gap: 12px; }
+  .step { display: flex; gap: 14px; align-items: flex-start; background: rgba(255,255,255,.75); border-radius: var(--radius);
+          padding: 16px 18px; border: 1px solid rgba(255,255,255,.9); }
+  .step .n { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font-weight: 800; color: #fff; flex: none; }
+  .step b { display: block; } .step span { color: var(--muted); font-size: 15px; }
+
+  /* stats */
+  .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-top: -34px; position: relative; }
+  .stat { background: var(--card); border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow); text-align: left; }
+  .stat b { display: block; font-family: var(--display); font-size: 34px; color: var(--blue); line-height: 1.1; }
+  .stat span { color: var(--navy); font-weight: 600; font-size: 15px; }
+  .stat.hl { background: var(--amber); } .stat.hl b, .stat.hl span { color: var(--navy); }
+
+  /* section headings */
+  .sec-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin: 44px 0 18px; flex-wrap: wrap; }
+  .sec-head h2 { font-family: var(--display); font-size: 30px; color: var(--navy); }
+  .sec-head p { margin: 4px 0 0; color: var(--muted); }
+
+  /* toolbar */
+  .toolbar { display: grid; grid-template-columns: minmax(220px, 1fr) auto auto auto auto; gap: 10px; align-items: center;
+             background: #fff; padding: 10px; border-radius: 18px; box-shadow: var(--shadow); margin-bottom: 22px; }
+  .toolbar .input { border-color: transparent; background: var(--bg); }
+  .toolbar .input:focus { background: #fff; }
+  .toolbar select.input { width: auto; padding-right: 34px; }
+  .chips { display: flex; gap: 4px; background: var(--bg); padding: 4px; border-radius: 12px; }
+  .chip { border: 0; background: none; padding: 7px 13px; border-radius: 9px; font-weight: 700; color: var(--muted); cursor: pointer; font-size: 14px; }
+  .chip.on { background: #fff; color: var(--navy); box-shadow: 0 1px 3px rgba(29,53,80,.12); }
+
+  /* cards */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
+  .card { background: var(--card); border-radius: 18px; overflow: hidden; box-shadow: var(--shadow); cursor: pointer;
+          display: flex; flex-direction: column; transition: transform .18s, box-shadow .18s; border: 1px solid rgba(212,227,242,.6); }
+  .card:hover { transform: translateY(-3px); box-shadow: 0 2px 4px rgba(29,53,80,.06), 0 18px 40px rgba(29,53,80,.14); }
+  .media { position: relative; aspect-ratio: 4 / 3; background: var(--panel); overflow: hidden; }
+  .media img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .4s; }
+  .card:hover .media img { transform: scale(1.04); }
+  .media .ph { position: absolute; inset: 0; display: grid; place-items: center; color: var(--blue); font-size: 64px;
+               background: linear-gradient(135deg, var(--panel), var(--sky)); }
+  .media .ph svg { stroke-width: 1.3; opacity: .75; }
+  .media .tl { position: absolute; top: 12px; left: 12px; display: flex; gap: 6px; }
+  .media .tl .badge { box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+  .media .tl .badge.LOST { background: #fff; } .media .tl .badge.FOUND { background: #fff; }
+  .media .rid { position: absolute; top: 12px; right: 12px; background: rgba(29,53,80,.78); color: #fff; font-size: 12px;
+                font-weight: 700; padding: 3px 9px; border-radius: 999px; backdrop-filter: blur(4px); }
+  .card.resolved .media img, .card.resolved .media .ph { filter: grayscale(.8); opacity: .75; }
+  .card .body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .card h3 { font-size: 18px; font-weight: 700; }
+  .meta { display: flex; flex-wrap: wrap; gap: 4px 14px; color: var(--muted); font-size: 14px; }
+  .meta span { display: inline-flex; align-items: center; gap: 5px; }
+  .clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--navy-2); font-size: 15px; margin: 2px 0 0; }
+  .card .foot { margin-top: auto; padding-top: 10px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); border-top: 1px dashed var(--line); }
+  .card .foot .alert { margin-left: auto; color: var(--amber-ink); background: #fdeccb; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+
+  .empty { grid-column: 1 / -1; text-align: center; padding: 56px 20px; background: #fff; border-radius: 18px;
+           border: 2px dashed var(--line); color: var(--muted); }
+  .empty .big { font-size: 46px; color: var(--blue); opacity: .6; }
+  .empty b { display: block; color: var(--navy); font-size: 18px; margin: 6px 0 4px; }
+
+  .skeleton { background: linear-gradient(90deg, #eaf2fa 25%, #f6faff 50%, #eaf2fa 75%); background-size: 200% 100%;
+              animation: shimmer 1.2s infinite; border-radius: 18px; height: 320px; }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+
+  /* ================= REPORT ================= */
+  .page-head { padding: 40px 0 8px; }
+  .page-head h1 { font-family: var(--display); font-size: clamp(30px, 4vw, 42px); color: var(--navy); margin-top: 6px; }
+  .page-head p { color: var(--muted); margin: 8px 0 0; font-size: 17px; max-width: 640px; }
+  .split { display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px; margin-top: 24px; align-items: start; }
+  .panel { background: #fff; border-radius: 20px; padding: 26px; box-shadow: var(--shadow); }
+  .panel h3 { font-size: 19px; }
+  .panel.tint { background: var(--panel); box-shadow: none; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+  .drop { display: grid; place-items: center; text-align: center; gap: 6px; border: 2px dashed #b9d3ec; border-radius: 16px;
+          padding: 26px 16px; background: var(--bg); cursor: pointer; transition: border-color .15s, background .15s; color: var(--muted); }
+  .drop:hover, .drop.over { border-color: var(--blue); background: #eaf3fc; }
+  .drop .big { font-size: 34px; color: var(--blue); }
+  .drop b { color: var(--navy); }
+  .drop-preview { position: relative; border-radius: 16px; overflow: hidden; max-height: 280px; }
+  .drop-preview img { width: 100%; max-height: 280px; object-fit: cover; display: block; }
+  .drop-preview button { position: absolute; top: 10px; right: 10px; }
+  .form-actions { display: flex; gap: 12px; align-items: center; margin-top: 22px; flex-wrap: wrap; }
+
+  .score-rules { display: grid; gap: 12px; margin-top: 14px; }
+  .rule { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; font-weight: 600; font-size: 15px; }
+  .rule small { grid-column: 1 / -1; color: var(--muted); font-weight: 400; font-size: 13px; }
+  .rule b { color: var(--blue); }
+  .bar { grid-column: 1 / -1; height: 8px; border-radius: 999px; background: #fff; overflow: hidden; }
+  .bar i { display: block; height: 100%; border-radius: 999px; background: var(--blue); }
+  .threshold { margin-top: 16px; padding: 14px 16px; background: var(--amber); border-radius: 14px; font-weight: 700; color: var(--navy); }
+
+  /* ================= MATCHES ================= */
+  .match { display: grid; grid-template-columns: 96px 1fr auto; gap: 16px; align-items: center; background: #fff;
+           border-radius: 18px; padding: 14px; box-shadow: var(--shadow); border: 1px solid rgba(212,227,242,.6); }
+  .match + .match { margin-top: 12px; }
+  .match .thumb { width: 96px; height: 96px; border-radius: 12px; overflow: hidden; background: var(--panel); display: grid;
+                  place-items: center; color: var(--blue); font-size: 38px; cursor: pointer; }
+  .match .thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .match h4 { margin: 4px 0 2px; font-size: 17px; }
+  .pts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .pts span { font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--panel); color: var(--blue); }
+  .pts span.zero { background: #f1f4f8; color: #98a6b8; }
+  .ring { --p: 60; width: 66px; height: 66px; border-radius: 50%; display: grid; place-items: center; margin: 0 auto 8px;
+          background: conic-gradient(var(--blue) calc(var(--p) * 1%), var(--panel) 0); }
+  .ring.hi { background: conic-gradient(var(--teal) calc(var(--p) * 1%), var(--panel) 0); }
+  .ring b { width: 52px; height: 52px; border-radius: 50%; background: #fff; display: grid; place-items: center; font-weight: 800; font-size: 16px; }
+  .match .side { text-align: center; min-width: 150px; display: grid; gap: 6px; justify-items: center; }
+  .hs { font-size: 12px; color: var(--muted); display: flex; gap: 10px; }
+  .hs .y { color: var(--found); font-weight: 700; }
+
+  .result-banner { display: flex; gap: 16px; align-items: center; background: var(--navy); color: #fff; border-radius: 20px; padding: 20px 24px; margin-top: 24px; }
+  .result-banner .tick { width: 46px; height: 46px; border-radius: 50%; background: var(--amber); color: var(--navy); display: grid; place-items: center; font-size: 22px; flex: none; }
+  .result-banner b { font-size: 18px; } .result-banner p { margin: 2px 0 0; opacity: .85; }
+  .result-banner code { background: rgba(255,255,255,.15); padding: 2px 8px; border-radius: 6px; font-weight: 700; }
+
+  /* ================= HANDOVER ================= */
+  .flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 24px 0 8px; counter-reset: s; }
+  .flow div { position: relative; background: var(--panel); border-radius: 14px; padding: 16px 14px; font-weight: 700; font-size: 14px; color: var(--navy); }
+  .flow div small { display: block; color: var(--blue); font-size: 12px; letter-spacing: .06em; margin-bottom: 2px; }
+  .flow div.last { background: var(--amber); }
+  .flow div.last small { color: var(--navy); }
+  .flow div:not(:last-child)::after { content: ""; position: absolute; right: -9px; top: 50%; width: 8px; height: 8px;
+           border-top: 2.5px solid #7d93ab; border-right: 2.5px solid #7d93ab; transform: translateY(-50%) rotate(45deg); }
+  .group h3 { font-size: 18px; margin: 30px 0 12px; display: flex; align-items: center; gap: 10px; }
+  .group h3 .n { background: var(--panel); color: var(--blue); font-size: 13px; padding: 2px 9px; border-radius: 999px; }
+  .group h3 .n.hot { background: var(--amber); color: var(--navy); }
+  .pair-of { font-size: 13px; color: var(--muted); margin-bottom: 2px; }
+
+  /* ================= DIALOGS ================= */
+  dialog { border: 0; padding: 0; border-radius: 24px; width: min(860px, calc(100vw - 24px)); max-height: calc(100vh - 24px);
+           box-shadow: var(--shadow-lg); color: var(--text); }
+  dialog::backdrop { background: rgba(16,30,48,.55); backdrop-filter: blur(3px); }
+  dialog[open] { animation: pop .22s ease; }
+  @keyframes pop { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
+  .x { position: absolute; top: 14px; right: 14px; z-index: 2; width: 38px; height: 38px; border-radius: 50%; border: 0;
+       background: rgba(255,255,255,.92); cursor: pointer; font-size: 20px; display: grid; place-items: center; color: var(--navy); box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+  .detail { display: grid; grid-template-columns: 1fr 1fr; }
+  .detail .pic { background: var(--panel); min-height: 340px; position: relative; }
+  .detail .pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; cursor: zoom-in; }
+  .detail .pic .ph { position: absolute; inset: 0; display: grid; place-items: center; font-size: 96px; color: var(--blue); }
+  .detail .info { padding: 28px; }
+  .detail h2 { font-family: var(--display); font-size: 28px; margin: 10px 0 6px; }
+  .facts { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; margin: 18px 0; font-size: 15px; }
+  .facts dt { color: var(--muted); } .facts dd { margin: 0; font-weight: 600; word-break: break-word; }
+  .detail .acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .detail-matches { padding: 0 28px 28px; }
+  .detail-matches h3 { margin: 4px 0 12px; font-size: 18px; }
+  .dlg-pad { padding: 28px; }
+  .dlg-pad h2 { font-family: var(--display); font-size: 24px; }
+
+  /* toast */
+  #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px); opacity: 0; z-index: 100;
+           background: var(--navy); color: #fff; padding: 12px 20px; border-radius: 999px; font-weight: 600;
+           box-shadow: var(--shadow-lg); transition: all .25s; pointer-events: none; max-width: calc(100vw - 32px); }
+  #toast.show { opacity: 1; transform: translateX(-50%); }
+  #toast.err { background: var(--lost); }
+
+  footer { border-top: 1px solid var(--line); padding: 26px 0 40px; color: var(--muted); font-size: 14px; }
+  footer .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  footer b { color: var(--navy); }
+
+  /* ================= RESPONSIVE ================= */
+  @media (max-width: 1000px) {
+    .landing, .hero .wrap, .split { grid-template-columns: 1fr; }
+    .landing { gap: 32px; }
+    .stats { grid-template-columns: repeat(3, 1fr); }
+    .toolbar { grid-template-columns: 1fr 1fr; }
+    .toolbar .search { grid-column: 1 / -1; }
+    .toolbar select.input { width: 100%; }
+    .flow { grid-template-columns: 1fr; }
+    .flow div:not(:last-child)::after { right: auto; left: 50%; top: auto; bottom: -10px; transform: translateX(-50%) rotate(135deg); }
+  }
+  @media (max-width: 760px) {
+    .wrap { padding: 0 16px; }
+    .topbar { backdrop-filter: none; background: #fff; }   /* backdrop-filter would trap the fixed bottom nav */
+    .topbar .wrap { height: 60px; gap: 10px; }
+    nav.main { position: fixed; bottom: 0; left: 0; right: 0; z-index: 40; background: rgba(255,255,255,.96);
+               backdrop-filter: blur(12px); border-top: 1px solid var(--line); justify-content: space-around;
+               padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); }
+    nav.main a { flex-direction: column; gap: 2px; font-size: 11px; padding: 6px 8px; border-radius: 12px; }
+    nav.main a svg { font-size: 20px; }
+    main { padding-bottom: 96px; }
+    footer { padding-bottom: 100px; }
+    .stats { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .stats .stat:first-child { grid-column: 1 / -1; }
+    .stat { padding: 14px 16px; } .stat b { font-size: 28px; }
+    .hero .wrap { padding-top: 32px; padding-bottom: 52px; }
+    .hero .ctas .btn { flex: 1; }
+    .two { grid-template-columns: 1fr; }
+    .panel { padding: 20px; }
+    .chips { grid-column: 1 / -1; } .chips .chip { flex: 1; }
+    .match { grid-template-columns: 72px 1fr; }
+    .match .thumb { width: 72px; height: 72px; }
+    .match .side { grid-column: 1 / -1; grid-template-columns: auto 1fr; text-align: left; justify-items: start; align-items: center; min-width: 0; }
+    .match .side .ring { margin: 0; grid-row: span 2; }
+    .detail { grid-template-columns: 1fr; }
+    .detail .pic { min-height: 240px; }
+    .detail .info, .dlg-pad { padding: 22px; }
+    .detail-matches { padding: 0 22px 22px; }
+    .auth-card { padding: 24px; }
+    .landing { padding-top: 32px; }
+    .landing .lead { font-size: 19px; }
+    #toast { bottom: 88px; }
+  }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+<!-- ======================= LANDING + LOGIN ======================= -->
+<div id="auth" class="hidden">
+  <div class="wrap landing">
+    <div>
+      <div class="uni">SRM University AP</div>
+      <h1 class="display">SRM <span>FIND</span> PORTAL</h1>
+      <p class="lead">Campus Lost &amp; Found</p>
+      <p class="lead-sub">Lost something on campus? Found something? Post it here. The portal matches lost and found reports for you, and returns them safely with a two-party email handshake.</p>
+      <div class="pills"><span>Java SE</span><span>Collections</span><span>OOP Architecture</span><span>Serialization</span></div>
+      <div class="credits">
+        <div><small>PRESENTED BY</small><b>Manoj · Vamsi · Sai Krishna · Shanmuk</b></div>
+        <div><small>COURSE</small><b>CSE 309 (Java Programming)</b></div>
+      </div>
+    </div>
+
+    <div class="auth-card">
+      <h2 id="authTitle">Welcome back</h2>
+      <p class="sub" id="authSub">Log in with your college email to continue.</p>
+      <div class="seg" role="tablist">
+        <button id="tabLogin" class="on" type="button" onclick="authMode('login')">Log in</button>
+        <button id="tabSignup" type="button" onclick="authMode('signup')">Create account</button>
+      </div>
+      <form id="authForm" novalidate>
+        <div id="nameField" class="hidden">
+          <label class="f" for="aName">Full name</label>
+          <input class="input" id="aName" name="name" autocomplete="name" placeholder="Your name">
+        </div>
+        <label class="f" for="aEmail">College email</label>
+        <input class="input" id="aEmail" name="email" type="email" placeholder="student123@srmap.edu.in" autocomplete="email" required>
+        <div class="hint" id="emailHint">Only .edu or .edu.in addresses are allowed</div>
+        <label class="f" for="aPass">Password</label>
+        <input class="input" id="aPass" name="password" type="password" autocomplete="current-password" placeholder="At least 6 characters" required>
+        <button class="btn block" id="authBtn" type="submit" style="margin-top:22px;padding:14px">Log in</button>
+        <div id="authMsg" aria-live="polite"></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= APP ======================= -->
+<div id="app" class="hidden">
+  <header class="topbar">
+    <div class="wrap">
+      <a class="brand" href="#home" onclick="go('home');return false"><span class="mark">SF</span><b>SRM <span>Find</span></b></a>
+      <nav class="main" aria-label="Main">
+        <a href="#home" data-view="home"><svg class="i" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Browse</a>
+        <a href="#report" data-view="report"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Report</a>
+        <a href="#handover" data-view="handover"><svg class="i" viewBox="0 0 24 24"><path d="M7 11l3 3 7-7M4 20h16"/></svg>Handover</a>
+        <a href="#mine" data-view="mine"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>My reports</a>
+      </nav>
+      <div class="top-right">
+        <button class="icon-btn" title="Notifications" aria-label="Notifications" onclick="go('handover')">
+          <svg class="i" viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 21a2 2 0 0 0 4 0"/></svg>
+          <span class="count hidden" id="bell"></span>
+        </button>
+        <div class="user-menu">
+          <button onclick="toggleMenu(event)" aria-label="Account"><span class="avatar" id="avatar"></span></button>
+          <div class="menu hidden" id="menu">
+            <div class="who"><b id="whoName"></b><small id="whoEmail"></small></div>
+            <button onclick="go('mine')"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>My reports</button>
+            <button onclick="logout()"><svg class="i" viewBox="0 0 24 24"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/></svg>Log out</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ---------- HOME / BROWSE ---------- -->
+    <section class="view" id="view-home">
+      <div class="hero">
+        <div class="wrap">
+          <div>
+            <div class="eyebrow">SRM Campus Community</div>
+            <h1>Lost something?<br><em>Let's find it.</em></h1>
+            <p>A shared place to report lost and found belongings, see possible matches, and get items back to their owners.</p>
+            <div class="ctas">
+              <button class="btn navy" onclick="go('report','LOST')">
+                <svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>I lost an item</button>
+              <button class="btn" onclick="go('report','FOUND')">
+                <svg class="i" viewBox="0 0 24 24"><path d="M12 21s-7-4.5-7-11a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 6.5-7 11-7 11z"/></svg>I found an item</button>
+            </div>
+          </div>
+          <div class="steps">
+            <div class="step"><span class="n" style="background:var(--blue)">1</span><div><b>Post a LOST or FOUND report</b><span>Add a photo, category and where it happened.</span></div></div>
+            <div class="step"><span class="n" style="background:var(--teal)">2</span><div><b>Get matched automatically</b><span>Category, name and location are scored. 60% or more is a match.</span></div></div>
+            <div class="step"><span class="n" style="background:var(--indigo)">3</span><div><b>Both sides confirm the handover</b><span>Owner and finder confirm, then both reports are marked RESOLVED.</span></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wrap">
+        <div class="stats" id="stats">
+          <div class="stat"><b data-k="total">–</b><span>Total Reports</span></div>
+          <div class="stat"><b data-k="lost">–</b><span>Lost Reports</span></div>
+          <div class="stat"><b data-k="found">–</b><span>Found Reports</span></div>
+          <div class="stat"><b data-k="active">–</b><span>Active Reports</span></div>
+          <div class="stat hl"><b data-k="resolved">–</b><span>Resolved Reports</span></div>
+        </div>
+
+        <div class="sec-head">
+          <div><h2>Browse reports</h2><p>Search by item, place or report ID, like L101.</p></div>
+        </div>
+        <div class="toolbar">
+          <div class="field-icon search">
+            <svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+            <label class="sr" for="fQ">Search</label>
+            <input class="input with-icon" id="fQ" placeholder="Search item, location or ID…" autocomplete="off">
+          </div>
+          <div class="chips" id="fType">
+            <button class="chip on" data-v="">All</button><button class="chip" data-v="LOST">Lost</button><button class="chip" data-v="FOUND">Found</button>
+          </div>
+          <label class="sr" for="fCat">Category</label>
+          <select class="input catSelect" id="fCat"><option value="">All categories</option></select>
+          <label class="sr" for="fStatus">Status</label>
+          <select class="input" id="fStatus"><option value="ACTIVE">Active</option><option value="RESOLVED">Resolved</option><option value="">Any status</option></select>
+          <label class="sr" for="fSort">Sort</label>
+          <select class="input" id="fSort"><option value="">Newest first</option><option value="name">Name A–Z</option></select>
+        </div>
+        <div class="grid" id="browseGrid"></div>
+      </div>
+    </section>
+
+    <!-- ---------- REPORT ---------- -->
+    <section class="view hidden" id="view-report">
+      <div class="wrap">
+        <div class="page-head">
+          <div class="eyebrow">Submit a report</div>
+          <h1 id="reportTitle">What did you lose?</h1>
+          <p id="reportSub">Describe it well. We'll check it against every found report right away.</p>
+        </div>
+        <div class="split">
+          <form class="panel" id="reportForm" novalidate>
+            <div class="seg big" id="typeSeg">
+              <button type="button" class="lost on" data-v="LOST"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>I lost an item</button>
+              <button type="button" class="found" data-v="FOUND"><svg class="i" viewBox="0 0 24 24"><path d="M12 21s-7-4.5-7-11a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 6.5-7 11-7 11z"/></svg>I found an item</button>
+            </div>
+            <input type="hidden" name="type" id="rType" value="LOST">
+            <div class="two">
+              <div><label class="f" for="rName">Item name</label>
+                <input class="input" id="rName" name="name" placeholder="e.g. Black wallet" required></div>
+              <div><label class="f" for="rCat">Category</label>
+                <select class="input catSelect" id="rCat" name="category" required><option value="">Select category</option></select></div>
+            </div>
+            <label class="f" for="rLoc" id="rLocLabel">Where did you lose it?</label>
+            <div class="field-icon">
+              <svg class="i" viewBox="0 0 24 24"><path d="M12 21s-6-5.5-6-11a6 6 0 0 1 12 0c0 5.5-6 11-6 11z"/><circle cx="12" cy="10" r="2"/></svg>
+              <input class="input with-icon" id="rLoc" name="location" placeholder="e.g. Library, S Block, Hostel" list="places" required>
+              <datalist id="places"><option>Library</option><option>S Block</option><option>C Block</option><option>Admin Block</option><option>Food Court</option><option>Mess</option><option>Hostel</option><option>Sports Complex</option><option>Parking</option></datalist>
+            </div>
+            <div class="hint">Use the same place name others would use, because a location match adds +20%.</div>
+            <label class="f">Item photo <span class="muted" style="font-weight:400">(optional)</span></label>
+            <label class="drop" id="drop" for="rPhoto">
+              <span class="big"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="15" rx="3"/><circle cx="12" cy="12.5" r="3.5"/><path d="M8 5l1.5-2h5L16 5"/></svg></span>
+              <b>Drop a photo here or click to upload</b>
+              <span style="font-size:13px">JPG, PNG or WEBP · up to 5 MB · hide ID numbers and other private details</span>
+            </label>
+            <input type="file" id="rPhoto" accept="image/*" class="sr">
+            <div class="drop-preview hidden" id="dropPreview">
+              <img id="rPreview" alt="Selected photo">
+              <button type="button" class="btn light sm" onclick="clearPhoto()">Remove</button>
+            </div>
+            <label class="f" for="rDesc">Description</label>
+            <textarea class="input" id="rDesc" name="description" placeholder="Colour, brand, identifying details, date or time…" required></textarea>
+            <div class="form-actions">
+              <button class="btn navy" type="submit" id="reportBtn" style="padding:13px 26px">Submit lost report</button>
+              <span class="muted" style="font-size:14px">Posted as <b id="postedAs"></b></span>
+            </div>
+            <div id="reportMsg" aria-live="polite"></div>
+          </form>
+
+          <aside class="panel tint">
+            <div class="eyebrow">Algorithmic match scoring</div>
+            <h3 style="margin-top:6px">How a match is found</h3>
+            <div class="score-rules">
+              <div class="rule">Category match <b>+40%</b><div class="bar"><i style="width:40%"></i></div><small>Required. Different categories never match.</small></div>
+              <div class="rule">Name match <b>+40% / +20%</b><div class="bar"><i style="width:40%;background:var(--teal)"></i></div><small>Exact name (any case) +40, partial, like "iPhone" and "iPhone 12", +20.</small></div>
+              <div class="rule">Location match <b>+20%</b><div class="bar"><i style="width:20%;background:var(--indigo)"></i></div><small>Same place, like Library, Block A or Hostel.</small></div>
+            </div>
+            <div class="threshold">Total score ≥ 60% is flagged as a match, and both people get a notification.</div>
+          </aside>
+        </div>
+        <div id="reportResult"></div>
+      </div>
+    </section>
+
+    <!-- ---------- HANDOVER ---------- -->
+    <section class="view hidden" id="view-handover">
+      <div class="wrap">
+        <div class="page-head">
+          <div class="eyebrow">Ownership verification</div>
+          <h1>Confirm an item's return</h1>
+          <p>Both the owner and the finder confirm with their registered emails. The match is checked again, then both reports move from ACTIVE to RESOLVED together.</p>
+        </div>
+        <div class="flow">
+          <div><small>STEP 1</small>Match detected (≥ 60%)</div>
+          <div><small>STEP 2</small>Confirmation by both</div>
+          <div><small>STEP 3</small>Verify registered emails</div>
+          <div><small>STEP 4</small>Update status</div>
+          <div class="last"><small>STEP 5</small>Item marked RESOLVED</div>
+        </div>
+
+        <div id="handoverLists"></div>
+
+        <div class="group"><h3>Confirm by report IDs</h3></div>
+        <form class="panel" id="manualForm" style="max-width:720px" novalidate>
+          <p class="muted" style="margin:0 0 4px">Already met the other person? Enter both report IDs. You must be the owner of the LOST report or the finder of the FOUND report. Your registered email is checked automatically.</p>
+          <div class="two">
+            <div><label class="f" for="mLost">LOST report ID</label><input class="input" id="mLost" name="lost" placeholder="L101" required></div>
+            <div><label class="f" for="mFound">FOUND report ID</label><input class="input" id="mFound" name="found" placeholder="F102" required></div>
+          </div>
+          <div class="form-actions"><button class="btn navy" type="submit">Confirm return</button></div>
+          <div id="manualMsg" aria-live="polite"></div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ---------- MY REPORTS ---------- -->
+    <section class="view hidden" id="view-mine">
+      <div class="wrap">
+        <div class="page-head">
+          <div class="eyebrow">Your activity</div>
+          <h1>My reports</h1>
+          <p>Edit, close, or check matches for everything you've posted.</p>
+        </div>
+        <div class="toolbar" style="grid-template-columns:auto 1fr;margin-top:24px">
+          <div class="chips" id="mineStatus">
+            <button class="chip on" data-v="">All</button><button class="chip" data-v="ACTIVE">Active</button><button class="chip" data-v="RESOLVED">Resolved</button>
+          </div>
+        </div>
+        <div class="grid" id="mineGrid"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span><b>SRM Find</b> · Campus Lost &amp; Found Portal · Please verify ownership before handing over an item.</span>
+      <span>CSE 309 · SRM University AP</span>
+    </div>
+  </footer>
+</div>
+
+<!-- ---------- DIALOGS ---------- -->
+<dialog id="detailDlg"><button class="x" onclick="detailDlg.close()" aria-label="Close">×</button><div id="detailBody"></div></dialog>
+
+<dialog id="editDlg" style="width:min(560px, calc(100vw - 24px))">
+  <button class="x" type="button" onclick="editDlg.close()" aria-label="Close">×</button>
+  <form id="editForm" class="dlg-pad" novalidate>
+    <div class="eyebrow">Edit report <span id="eId"></span></div>
+    <h2 style="margin:6px 0 4px">Update details</h2>
+    <input type="hidden" name="id" id="eIdInput">
+    <label class="f" for="eName">Item name</label><input class="input" id="eName" name="name" required>
+    <label class="f" for="eLoc">Location</label><input class="input" id="eLoc" name="location" list="places" required>
+    <label class="f" for="eDesc">Description</label><textarea class="input" id="eDesc" name="description" required></textarea>
+    <label class="f" for="ePhoto">Photo</label>
+    <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+      <img id="ePreview" class="hidden" alt="Current photo" style="width:84px;height:84px;object-fit:cover;border-radius:12px">
+      <input id="ePhoto" type="file" accept="image/*" style="flex:1;min-width:200px">
+    </div>
+    <label id="eRemoveWrap" class="hidden" style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:14px">
+      <input type="checkbox" name="removePhoto" value="1"> Remove current photo</label>
+    <div class="form-actions"><button class="btn navy" type="submit">Save changes</button>
+      <button class="btn light" type="button" onclick="editDlg.close()">Cancel</button></div>
+    <div id="editMsg" aria-live="polite"></div>
+  </form>
+</dialog>
+
+<div id="toast" role="status"></div>
+
+<script>
+/* ============ helpers ============ */
+const CATS = { ELECTRONICS: "Electronics", IDENTITY_CARDS: "ID Cards", BOOKS: "Books",
+               CLOTHING: "Clothing", ACCESSORIES: "Accessories", OTHER: "Other" };
+const ICON_PATHS = {
+  ELECTRONICS: '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
+  IDENTITY_CARDS: '<rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="11" r="2"/><path d="M5.8 16c.8-1.4 1.9-2 3.2-2s2.4.6 3.2 2M14.5 10h4M14.5 13.5h3"/>',
+  BOOKS: '<path d="M4 4.5h5.5A2.5 2.5 0 0 1 12 7v13a2 2 0 0 0-2-2H4zM20 4.5h-5.5A2.5 2.5 0 0 0 12 7v13a2 2 0 0 1 2-2h6z"/>',
+  CLOTHING: '<path d="M8.5 3.5 12 5l3.5-1.5 5 3.5-2.5 3.5-2-1V20h-8V9.5l-2 1L3.5 7z"/>',
+  ACCESSORIES: '<circle cx="12" cy="12" r="5"/><path d="M9 7.6 10 3h4l1 4.6M9 16.4l1 4.6h4l1-4.6M12 10v2l1.2 1.2"/>',
+  OTHER: '<path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5zM3 7.5l9 4.5 9-4.5M12 12v9"/>'
+};
+const icon = c => `<svg class="i" viewBox="0 0 24 24">${ICON_PATHS[c] || ICON_PATHS.OTHER}</svg>`;
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $ = id => document.getElementById(id);
+const initials = n => (n || "?").split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join("");
+const EMAIL_RE = /^[A-Za-z0-9._%+-]+@.*\.edu(\.in)?$/;   // same regex as Main.java
+let me = null, mode = "login", cache = {}, view = "home", notes = [];
+
+async function api(path, data) {
+  const opts = data ? { method: "POST", body: new URLSearchParams(data) } : {};
+  const res = await fetch("/api/" + path, opts);
+  const json = await res.json().catch(() => ({ error: "Server not reachable" }));
+  if (!res.ok) {
+    if (res.status === 401 && !["login", "signup", "me"].includes(path)) showAuth();
+    throw new Error(json.error || "Something went wrong");
+  }
+  return json;
+}
+const formData = f => Object.fromEntries(new FormData(f));
+const showMsg = (el, text, ok) => el.innerHTML = text ? `<div class="msg ${ok ? "ok" : "err"}">${esc(text)}</div>` : "";
+let toastTimer;
+function toast(text, err) {
+  const t = $("toast"); t.textContent = text; t.className = "show" + (err ? " err" : "");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.className = "", 2800);
+}
+
+/* ============ auth ============ */
+function authMode(m) {
+  mode = m;
+  $("tabLogin").classList.toggle("on", m === "login");
+  $("tabSignup").classList.toggle("on", m === "signup");
+  $("nameField").classList.toggle("hidden", m === "login");
+  $("authTitle").textContent = m === "login" ? "Welcome back" : "Join SRM Find";
+  $("authSub").textContent = m === "login" ? "Log in with your college email to continue." : "Create an account with your official campus email.";
+  $("authBtn").textContent = m === "login" ? "Log in" : "Create account";
+  $("aPass").autocomplete = m === "login" ? "current-password" : "new-password";
+  showMsg($("authMsg"), "");
+}
+$("aEmail").addEventListener("input", e => {
+  const v = e.target.value.trim(), h = $("emailHint");
+  if (!v) { h.className = "hint"; h.textContent = "Only .edu or .edu.in addresses are allowed"; return; }
+  const ok = EMAIL_RE.test(v);
+  h.className = "hint " + (ok ? "ok" : "bad");
+  h.textContent = ok ? "✓ Valid campus email" : "✗ Must be an institutional email ending in .edu or .edu.in";
+});
+$("authForm").onsubmit = async e => {
+  e.preventDefault();
+  const btn = $("authBtn"); btn.disabled = true;
+  try { me = await api(mode, formData(e.target)); e.target.reset(); showApp(); }
+  catch (err) { showMsg($("authMsg"), err.message); }
+  finally { btn.disabled = false; }
+};
+async function logout() { await api("logout", {}); me = null; $("menu").classList.add("hidden"); showAuth(); }
+function showAuth() { $("app").classList.add("hidden"); $("auth").classList.remove("hidden"); }
+function showApp() {
+  $("auth").classList.add("hidden"); $("app").classList.remove("hidden");
+  $("avatar").textContent = initials(me.name);
+  $("whoName").textContent = me.name; $("whoEmail").textContent = me.email; $("postedAs").textContent = me.name;
+  const v = location.hash.slice(1);
+  go(["home", "report", "handover", "mine"].includes(v) ? v : "home");
+}
+function toggleMenu(e) { e.stopPropagation(); $("menu").classList.toggle("hidden"); }
+document.addEventListener("click", e => { if (!e.target.closest(".user-menu")) $("menu").classList.add("hidden"); });
+
+/* ============ navigation ============ */
+function go(v, reportType) {
+  view = v;
+  $("menu").classList.add("hidden");
+  document.querySelectorAll("nav.main a").forEach(a => a.classList.toggle("on", a.dataset.view === v));
+  document.querySelectorAll("section.view").forEach(s => s.classList.toggle("hidden", s.id !== "view-" + v));
+  history.replaceState(null, "", "#" + v);
+  if (v === "report") setType(reportType || $("rType").value);
+  window.scrollTo({ top: 0 });
+  refresh();
+}
+document.querySelectorAll("nav.main a").forEach(a => a.onclick = e => { e.preventDefault(); go(a.dataset.view); });
+window.addEventListener("hashchange", () => {
+  const v = location.hash.slice(1);
+  if (me && v !== view && ["home", "report", "handover", "mine"].includes(v)) go(v);
+});
+function refresh() {
+  loadStats(); loadNotes();
+  if (view === "home") loadBrowse();
+  if (view === "mine") loadMine();
+}
+
+/* ============ stats + notifications ============ */
+async function loadStats() {
+  const s = await api("stats");
+  document.querySelectorAll("#stats [data-k]").forEach(b => b.textContent = s[b.dataset.k]);
+}
+async function loadNotes() {
+  notes = await api("notifications");
+  const n = notes.filter(x => x.kind !== "waiting").length;
+  $("bell").textContent = n; $("bell").classList.toggle("hidden", !n);
+  if (view === "handover") renderHandover();
+}
+
+/* ============ cards ============ */
+function card(it, alertCount) {
+  cache[it.id] = it;
+  const media = it.photo ? `<img src="${esc(it.photo)}" alt="${esc(it.name)}" loading="lazy">` : `<div class="ph">${icon(it.category)}</div>`;
+  return `<article class="card ${it.status === "RESOLVED" ? "resolved" : ""}" tabindex="0" role="button"
+      aria-label="${esc(it.type + " " + it.name)}" onclick="openDetail('${it.id}')" onkeydown="if(event.key==='Enter')openDetail('${it.id}')">
+    <div class="media">${media}
+      <div class="tl"><span class="badge ${it.type}"><span class="dot"></span>${it.type}</span>
+        ${it.status === "RESOLVED" ? '<span class="badge RESOLVED">RESOLVED</span>' : ""}</div>
+      <span class="rid">${esc(it.id)}</span>
+    </div>
+    <div class="body">
+      <h3>${esc(it.name)}</h3>
+      <div class="meta"><span>${icon(it.category)}${CATS[it.category]}</span>
+        <span><svg class="i" viewBox="0 0 24 24"><path d="M12 21s-6-5.5-6-11a6 6 0 0 1 12 0c0 5.5-6 11-6 11z"/><circle cx="12" cy="10" r="2"/></svg>${esc(it.location)}</span></div>
+      <p class="clamp">${esc(it.description)}</p>
+      <div class="foot"><span class="avatar sm">${esc(initials(it.student))}</span>${it.mine ? "You" : esc(it.student)} · ${esc(it.date.split(" ")[0])}
+        ${alertCount ? `<span class="alert">${alertCount} match${alertCount > 1 ? "es" : ""}</span>` : ""}</div>
+    </div>
+  </article>`;
+}
+const skeletons = n => Array.from({ length: n }, () => '<div class="skeleton"></div>').join("");
+const emptyBox = (title, text, cta) => `<div class="empty"><div class="big"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></div>
+  <b>${title}</b>${text}${cta ? `<div style="margin-top:16px">${cta}</div>` : ""}</div>`;
+const matchCountFor = id => notes.filter(n => n.mine.id === id && n.kind !== "waiting").length;
+
+/* ============ browse ============ */
+let typeFilter = "", searchTimer, browseSeq = 0;
+$("fType").onclick = e => {
+  const b = e.target.closest(".chip"); if (!b) return;
+  typeFilter = b.dataset.v;
+  $("fType").querySelectorAll(".chip").forEach(c => c.classList.toggle("on", c === b));
+  loadBrowse();
+};
+["fQ", "fCat", "fStatus", "fSort"].forEach(id => $(id).addEventListener("input", () => {
+  clearTimeout(searchTimer); searchTimer = setTimeout(loadBrowse, 180);
+}));
+async function loadBrowse() {
+  const seq = ++browseSeq, grid = $("browseGrid");
+  if (!grid.children.length) grid.innerHTML = skeletons(4);
+  const list = await api("items?" + new URLSearchParams({
+    q: $("fQ").value.trim(), type: typeFilter, category: $("fCat").value, status: $("fStatus").value, sort: $("fSort").value }));
+  if (seq !== browseSeq) return;
+  grid.innerHTML = list.length ? list.map(i => card(i, i.mine ? matchCountFor(i.id) : 0)).join("")
+    : emptyBox("No reports found", "Try another search, or be the first to post.",
+        `<button class="btn" onclick="go('report')">Post a report</button>`);
+}
+
+/* ============ my reports ============ */
+let mineFilter = "";
+$("mineStatus").onclick = e => {
+  const b = e.target.closest(".chip"); if (!b) return;
+  mineFilter = b.dataset.v;
+  $("mineStatus").querySelectorAll(".chip").forEach(c => c.classList.toggle("on", c === b));
+  loadMine();
+};
+async function loadMine() {
+  const list = await api("items?" + new URLSearchParams({ mine: 1, status: mineFilter }));
+  $("mineGrid").innerHTML = list.length ? list.map(i => card(i, matchCountFor(i.id))).join("")
+    : emptyBox("Nothing here yet", "Reports you post will show up here.",
+        `<button class="btn" onclick="go('report')">Post a report</button>`);
+}
+
+/* ============ report ============ */
+let photoFile = null;
+function setType(t) {
+  $("rType").value = t;
+  const lost = t === "LOST";
+  $("typeSeg").querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.v === t));
+  $("reportTitle").textContent = lost ? "What did you lose?" : "What did you find?";
+  $("reportSub").textContent = lost
+    ? "Describe it well. We'll check it against every found report right away."
+    : "Thanks for helping! Post it so the owner can find it and contact you.";
+  $("rLocLabel").textContent = lost ? "Where did you lose it?" : "Where did you find it?";
+  $("reportBtn").textContent = lost ? "Submit lost report" : "Submit found report";
+  $("reportBtn").className = "btn " + (lost ? "navy" : "");
+  $("reportBtn").style.padding = "13px 26px";
+}
+$("typeSeg").onclick = e => { const b = e.target.closest("button"); if (b) setType(b.dataset.v); };
+
+function setPhoto(f) {
+  if (f && !f.type.startsWith("image/")) return toast("Please choose an image file", true);
+  photoFile = f || null;
+  $("drop").classList.toggle("hidden", !!f);
+  $("dropPreview").classList.toggle("hidden", !f);
+  if (f) $("rPreview").src = URL.createObjectURL(f);
+}
+function clearPhoto() { $("rPhoto").value = ""; setPhoto(null); }
+$("rPhoto").onchange = e => setPhoto(e.target.files[0]);
+["dragenter", "dragover"].forEach(ev => $("drop").addEventListener(ev, e => { e.preventDefault(); $("drop").classList.add("over"); }));
+["dragleave", "drop"].forEach(ev => $("drop").addEventListener(ev, e => { e.preventDefault(); $("drop").classList.remove("over"); }));
+$("drop").addEventListener("drop", e => setPhoto(e.dataTransfer.files[0]));
+
+// Shrinks the picture in the browser (max 1200px, JPEG) so uploads stay small and fast.
+function readPhoto(file) {
+  return new Promise((resolve, reject) => {
+    if (!file) return resolve("");
+    const img = new Image();
+    img.onload = () => {
+      const s = Math.min(1, 1200 / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(img.src);
+      resolve(c.toDataURL("image/jpeg", 0.82));
+    };
+    img.onerror = () => reject(new Error("This photo could not be opened. Try a JPG or PNG."));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+$("reportForm").onsubmit = async e => {
+  e.preventDefault();
+  const f = e.target;
+  for (const el of f.querySelectorAll("[required]")) if (!el.value.trim()) {
+    el.focus(); return showMsg($("reportMsg"), (el.labels[0]?.textContent || "This field") + " is required.");
+  }
+  const btn = $("reportBtn"); btn.disabled = true; btn.textContent = "Posting…";
+  try {
+    const data = formData(f);
+    data.photo = await readPhoto(photoFile);
+    const res = await api("report", data);
+    const type = $("rType").value;
+    f.reset(); clearPhoto(); setType(type); showMsg($("reportMsg"), "");
+    cache[res.item.id] = res.item;
+    $("reportResult").innerHTML = `
+      <div class="result-banner"><div class="tick">✓</div>
+        <div><b>Report registered successfully</b><p>Your report ID is <code>${esc(res.item.id)}</code>. Keep it for the handover.</p></div></div>
+      <div class="group"><h3>${res.matches.length ? `Possible matches <span class="n hot">${res.matches.length}</span>` : "No matching reports found currently"}</h3></div>
+      ${res.matches.length ? res.matches.map(m => matchRow(m, res.item)).join("")
+        : `<p class="muted">We'll show a notification as soon as someone posts a matching report. You can check <a href="#mine" onclick="go('mine');return false">My reports</a> any time.</p>`}`;
+    $("reportResult").scrollIntoView({ behavior: "smooth", block: "start" });
+    loadStats(); loadNotes();
+  } catch (err) { showMsg($("reportMsg"), err.message); }
+  finally { btn.disabled = false; setType($("rType").value); }
+};
+
+/* ============ match row (score breakdown + handshake) ============ */
+function matchRow(m, mine) {
+  const it = m.item; cache[it.id] = it;
+  const iAmOwner = mine.type === "LOST", meConfirmed = iAmOwner ? m.ownerConfirmed : m.finderConfirmed;
+  const otherConfirmed = iAmOwner ? m.finderConfirmed : m.ownerConfirmed, otherRole = iAmOwner ? "finder" : "owner";
+  const p = (label, v, max) => `<span class="${v ? "" : "zero"}">${label} +${v}%</span>`;
+  let action;
+  if (it.mine) action = `<span class="muted" style="font-size:13px">Both reports are yours</span>`;
+  else if (meConfirmed) action = `<button class="btn light sm" disabled>Waiting for ${otherRole}</button>
+      <button class="btn sm" style="background:none;color:var(--muted);padding:2px" onclick="decline('${m.lostId}','${m.foundId}')">Cancel</button>`;
+  else action = `<button class="btn ${otherConfirmed ? "amber" : "navy"} sm" onclick="confirmPair('${m.lostId}','${m.foundId}')">
+      ${otherConfirmed ? "Confirm & resolve" : iAmOwner ? "This is mine" : "Owner found"}</button>`;
+  return `<div class="match">
+    <div class="thumb" onclick="openDetail('${it.id}')">${it.photo ? `<img src="${esc(it.photo)}" alt="">` : icon(it.category)}</div>
+    <div>
+      <div class="pair-of">${esc(mine.id)} ↔ ${esc(it.id)}</div>
+      <span class="badge ${it.type}"><span class="dot"></span>${it.type}</span>
+      <h4>${esc(it.name)}</h4>
+      <div class="meta"><span>${esc(it.location)}</span><span>by ${it.mine ? "you" : esc(it.student)}</span>
+        ${it.mine ? "" : `<a href="mailto:${esc(it.email)}?subject=${encodeURIComponent("SRM Find: " + it.name + " (" + it.id + ")")}">Email ${otherRole}</a>`}</div>
+      <div class="pts">${p("Category", m.category)}${p("Name", m.name)}${p("Location", m.location)}</div>
+    </div>
+    <div class="side">
+      <div class="ring ${m.score >= 80 ? "hi" : ""}" style="--p:${m.score}"><b>${m.score}%</b></div>
+      <div class="hs"><span class="${m.ownerConfirmed ? "y" : ""}">${m.ownerConfirmed ? "✓" : "○"} Owner</span><span class="${m.finderConfirmed ? "y" : ""}">${m.finderConfirmed ? "✓" : "○"} Finder</span></div>
+      <div style="display:flex;gap:6px;align-items:center">${action}</div>
+    </div>
+  </div>`;
+}
+
+async function confirmPair(lost, found) {
+  try {
+    const r = await api("confirm", { lost, found });
+    if (r.status === "RESOLVED") toast("🎉 Both sides confirmed. " + lost + " and " + found + " are now RESOLVED.");
+    else toast("Confirmed. Waiting for the " + r.waitingFor + " to confirm.");
+    detailDlg.close(); $("reportResult").innerHTML = ""; refresh();
+  } catch (err) { toast(err.message, true); }
+}
+async function decline(lost, found) {
+  try { await api("decline", { lost, found }); toast("Confirmation cancelled."); detailDlg.close(); refresh(); }
+  catch (err) { toast(err.message, true); }
+}
+
+/* ============ handover page ============ */
+function renderHandover() {
+  const groups = [
+    ["confirm", "Waiting for your confirmation", "hot"],
+    ["match", "Possible matches for your reports", ""],
+    ["waiting", "Waiting for the other person", ""]
+  ];
+  const html = groups.map(([k, title, cls]) => {
+    const list = notes.filter(n => n.kind === k);
+    if (!list.length) return "";
+    return `<div class="group"><h3>${title} <span class="n ${cls}">${list.length}</span></h3>
+      ${list.map(n => matchRow(n.match, n.mine)).join("")}</div>`;
+  }).join("");
+  $("handoverLists").innerHTML = html || `<div class="group"><h3>Your matches</h3></div>` +
+    emptyBox("No matches yet", "When a report scores 60% or more against one of yours, it shows up here.", "");
+}
+$("manualForm").onsubmit = async e => {
+  e.preventDefault();
+  const d = formData(e.target);
+  if (!d.lost.trim() || !d.found.trim()) return showMsg($("manualMsg"), "Enter both report IDs.");
+  try {
+    const r = await api("confirm", { lost: d.lost.trim(), found: d.found.trim() });
+    showMsg($("manualMsg"), r.status === "RESOLVED" ? "Both reports successfully resolved!"
+      : `Your confirmation is recorded. Waiting for the ${r.waitingFor} to confirm.`, true);
+    e.target.reset(); refresh();
+  } catch (err) { showMsg($("manualMsg"), err.message); }
+};
+
+/* ============ detail dialog ============ */
+async function openDetail(id) {
+  const it = cache[id]; if (!it) return;
+  const contact = it.mine ? "" :
+    `<a class="btn" href="mailto:${esc(it.email)}?subject=${encodeURIComponent("SRM Find: " + it.name + " (" + it.id + ")")}">
+      <svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>Contact ${it.type === "FOUND" ? "finder" : "owner"}</a>`;
+  const own = it.mine && it.status === "ACTIVE" ? `
+      <button class="btn light" onclick="openEdit('${it.id}')">Edit</button>
+      <button class="btn light" onclick="closeReport('${it.id}')">${it.type === "LOST" ? "I got it back" : "Returned to owner"}</button>` : "";
+  const del = it.mine ? `<button class="btn danger" onclick="deleteItem('${it.id}')">Delete</button>` : "";
+  $("detailBody").innerHTML = `
+    <div class="detail">
+      <div class="pic">${it.photo ? `<img src="${esc(it.photo)}" alt="${esc(it.name)}" onclick="window.open(this.src)">` : `<div class="ph">${icon(it.category)}</div>`}</div>
+      <div class="info">
+        <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="badge ${it.type}"><span class="dot"></span>${it.type}</span>
+          <span class="badge ${it.status === "RESOLVED" ? "RESOLVED" : "soft"}">${it.status}</span></div>
+        <h2>${esc(it.name)}</h2>
+        <p class="muted" style="margin:0;white-space:pre-wrap">${esc(it.description)}</p>
+        <dl class="facts">
+          <dt>Report ID</dt><dd>${esc(it.id)}</dd>
+          <dt>Category</dt><dd>${CATS[it.category]}</dd>
+          <dt>Location</dt><dd>${esc(it.location)}</dd>
+          <dt>Date</dt><dd>${esc(it.date)}</dd>
+          <dt>Reported by</dt><dd>${it.mine ? "You" : esc(it.student)}</dd>
+          <dt>Email</dt><dd>${esc(it.email)}</dd>
+        </dl>
+        <div class="acts">${contact}${own}${del}</div>
+      </div>
+    </div>
+    <div class="detail-matches" id="detailMatches"></div>`;
+  detailDlg.showModal();
+  if (it.mine && it.status === "ACTIVE") {
+    const list = await api("matches?id=" + encodeURIComponent(id));
+    $("detailMatches").innerHTML = `<h3>${list.length ? `Possible matches (${list.length})` : "No matches yet"}</h3>` +
+      (list.length ? list.map(m => matchRow(m, it)).join("") : `<p class="muted" style="margin:0">You'll get a notification when a report scores 60% or more.</p>`);
+  }
+}
+
+/* ============ edit / close / delete ============ */
+function openEdit(id) {
+  const it = cache[id]; detailDlg.close();
+  $("eId").textContent = id; $("eIdInput").value = id;
+  $("eName").value = it.name; $("eLoc").value = it.location; $("eDesc").value = it.description;
+  $("ePhoto").value = ""; $("editForm").removePhoto.checked = false;
+  $("ePreview").classList.toggle("hidden", !it.photo); $("eRemoveWrap").classList.toggle("hidden", !it.photo);
+  if (it.photo) $("ePreview").src = it.photo;
+  showMsg($("editMsg"), ""); editDlg.showModal();
+}
+$("ePhoto").onchange = e => { const f = e.target.files[0]; if (f) { $("ePreview").src = URL.createObjectURL(f); $("ePreview").classList.remove("hidden"); } };
+$("editForm").onsubmit = async e => {
+  e.preventDefault();
+  try {
+    const data = formData(e.target);
+    data.photo = await readPhoto($("ePhoto").files[0]);
+    await api("edit", data); editDlg.close(); toast("Report updated successfully."); refresh();
+  } catch (err) { showMsg($("editMsg"), err.message); }
+};
+async function closeReport(id) {
+  if (!confirm(`Mark ${id} as resolved? Use this only if the item was returned outside the portal.`)) return;
+  try { await api("resolve", { id }); detailDlg.close(); toast(id + " marked RESOLVED."); refresh(); }
+  catch (err) { toast(err.message, true); }
+}
+async function deleteItem(id) {
+  if (!confirm(`Delete report ${id}? This cannot be undone.`)) return;
+  try { await api("delete", { id }); detailDlg.close(); toast("Report deleted."); refresh(); }
+  catch (err) { toast(err.message, true); }
+}
+
+/* ============ start ============ */
+document.querySelectorAll(".catSelect").forEach(s =>
+  s.insertAdjacentHTML("beforeend", Object.entries(CATS).map(([k, v]) => `<option value="${k}">${v}</option>`).join("")));
+api("me").then(u => { me = u; showApp(); }).catch(showAuth);
+setInterval(() => { if (me && !document.hidden) loadNotes(); }, 20000);   // keep notifications fresh
+</script>
+</body>
+</html>
