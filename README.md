@@ -48,3 +48,16 @@ website, because the program only reads `srmfind.dat`.
 
 - `Main.java`: the Java backend (model classes, matching logic, login, and the web server)
 - `public/index.html`: the web page (HTML, CSS and JavaScript)
+
+## Deployment (Vercel)
+
+The site runs on Vercel as a container built from `Dockerfile.vercel` (Java 21).
+Vercel's container disk is temporary, so when the `BLOB_READ_WRITE_TOKEN` environment
+variable is set, the server saves `srmfind.dat` and the photos in a **private Vercel Blob store**
+instead of the `data/` folder:
+
+- `srmfind/srmfind.dat`: the serialized `Storage` object (same Java serialization as locally)
+- `srmfind/photos/…`: item photos, served through the Java server
+
+Logins use a signed (HMAC-SHA256) cookie, so users stay logged in when Vercel restarts the server.
+Every push to `main` on GitHub deploys automatically.
