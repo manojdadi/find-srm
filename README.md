@@ -13,7 +13,7 @@ javac Main.java
 java Main
 ```
 
-Then open http://localhost:8080 in your browser.
+Then open https://srm-find-one.vercel.app/#home in your browser.
 
 ## Features
 
